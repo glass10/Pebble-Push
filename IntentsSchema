@@ -1,0 +1,30 @@
+{
+  "intents": [
+    {
+      "slots": [
+        {
+          "name": "Text",
+          "type": "REMINDER"
+        },
+        {
+            "name": "Date",
+            "type": "AMAZON.Date"
+        },
+        {
+            "name": "Time",
+            "type": "AMAZON.Time"
+        }
+      ],
+      "intent": "normalReq"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
+}
