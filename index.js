@@ -1,4 +1,5 @@
 var https = require('https')
+var http = require('http')
 
 exports.handler = (event, context) => {
 
@@ -36,13 +37,18 @@ exports.handler = (event, context) => {
             var dd = today.getDate();
             var mm = today.getMonth()+1; //January is 0!
             var yyyy = today.getFullYear();
-
+            var hours = today.getHours();
+            console.log(hours);
             if(dd<10) {
                 dd='0'+dd
             } 
             if(mm<10) {
                 mm='0'+mm
             } 
+
+            if(hours < 4){
+                dd--;
+            }
             today = yyyy+'-'+mm+'-'+dd;
 
             if(date === undefined){
@@ -51,17 +57,54 @@ exports.handler = (event, context) => {
             if(time === undefined){
                 time = '12:00';
             }
-            
+
             console.log(reminder);
             console.log(date);
             console.log(time);
 
-            context.succeed(
-                generateResponse(
-                    buildSpeechletResponse('Reminder is ' + reminder + ', date is ' + date + ', and time is ' + time, true),
-                    {}
-                )
-            )
+            var id = Math.floor((Math.random() * 999999) + 100000);
+
+            var pin = {
+                "id": "remind-"+12345,
+                "time": date+"T"+time+"Z",
+                "layout": {
+                    "type": "genericPin",
+                    "title": reminder,
+                    "tinyIcon": "system://images/NOTIFICATION_FLAG"
+                }
+            }
+
+            var put_options = {
+                host: 'timeline-api.getpebble.com',
+                path: '/v1/user/pins/remind-'+12345,
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Token': '***REMOVED***'
+                }
+            };
+
+            put_req = https.request(put_options, function (res) {
+                console.log('STATUS: ' + res.statusCode);
+                console.log('HEADERS: ' + JSON.stringify(res.headers));
+                res.setEncoding('utf8');
+                res.on('data', function (chunk) {
+                    console.log('Response: ', chunk);
+                    context.succeed(
+                        generateResponse(
+                            buildSpeechletResponse('Reminder is ' + reminder + ', date is ' + date + ', and time is ' + time, true),
+                            {}
+                        )
+                    )
+                });
+            });
+
+            put_req.on('error', function(e) {
+                console.log('problem with request: ' + e.message);
+            });
+
+            put_req.write(JSON.stringify(pin));
+            put_req.end();
 
 
             break;
