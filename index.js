@@ -65,18 +65,18 @@ exports.handler = (event, context) => {
             var id = Math.floor((Math.random() * 999999) + 100000);
 
             var pin = {
-                "id": "remind-"+12345,
-                "time": date+"T"+time+"Z",
+                "id": "pebblepush-"+date+"-"+time,
+                "time": date+"T"+time+":00Z",
                 "layout": {
                     "type": "genericPin",
                     "title": reminder,
                     "tinyIcon": "system://images/NOTIFICATION_FLAG"
                 }
-            }
+            };
 
             var put_options = {
                 host: 'timeline-api.getpebble.com',
-                path: '/v1/user/pins/remind-'+12345,
+                path: '/v1/user/pins/pebblepush-'+date+'-'+time,
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ exports.handler = (event, context) => {
             put_req.on('error', function(e) {
                 console.log('problem with request: ' + e.message);
             });
-
+            console.log(JSON.stringify(pin));
             put_req.write(JSON.stringify(pin));
             put_req.end();
 
