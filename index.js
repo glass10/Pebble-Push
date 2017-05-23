@@ -62,15 +62,37 @@ exports.handler = (event, context) => {
             console.log(date);
             console.log(time);
 
-            var id = Math.floor((Math.random() * 999999) + 100000);
+            var offset = "-04:00";
+
+            var formattedTime = date+"T"+time+":00"+offset;
 
             var pin = {
                 "id": "pebblepush-"+date+"-"+time,
-                "time": date+"T"+time+":00Z",
+                "time": formattedTime,
+                "duration": 15,
+                "createNotification": {
+                    "layout": {
+                    "type": "genericNotification",
+                    "title": "New Reminder",
+                    "tinyIcon": "system://images/NOTIFICATION_LIGHTHOUSE",
+                    "body": "PebblePush has just added a new Reminder to your Timeline"
+                    }
+                },
+                "reminders": [
+                    {
+                    "time": formattedTime,
+                    "layout": {
+                        "type": "genericReminder",
+                        "tinyIcon": "system://images/NOTIFICATION_REMINDER",
+                        "title": reminder
+                        }
+                    }
+                ],
                 "layout": {
                     "type": "genericPin",
                     "title": reminder,
-                    "tinyIcon": "system://images/NOTIFICATION_FLAG"
+                    "tinyIcon": "system://images/NOTIFICATION_REMINDER",
+                    "body": "Created by PebblePush on Amazon Alexa"
                 }
             };
 
