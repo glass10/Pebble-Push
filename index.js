@@ -1,5 +1,9 @@
-var https = require('https')
-var http = require('http')
+var https = require('https');
+var http = require('http');
+var events = require('events');
+var util = require('util');
+var eventEmitter = new events.EventEmitter();
+
 
 exports.handler = (event, context) => {
 
@@ -32,6 +36,8 @@ exports.handler = (event, context) => {
             var reminder = event.request.intent.slots.Text.value;
             var date = event.request.intent.slots.Date.value;
             var time = event.request.intent.slots.Time.value;
+            var username = event.session.user.userId;
+            var self;
 
             var today = new Date();
             var dd = today.getDate();
@@ -62,100 +68,156 @@ exports.handler = (event, context) => {
             console.log(date);
             console.log(time);
 
-            var timezone = "EDT";
-            var timelineID = '***REMOVED***';
-            var offset;
-
-            switch(timezone){
-                case "EDT":
-                    offset = "-04:00";
-                    break;
-                case "CDT":
-                    offset = "-05:00";
-                    break;
-                case "MDT":
-                    offset = "-06:00";
-                    break;
-                case "PDT":
-                    offset = "-07:00";
-                    break;
-                case "AKDT":
-                    offset = "-08:00";
-                    break;
-                case "HST":
-                    offset = "-10:00";
-                    break;
-                default:
-                    offset = "-04:00";
-                    break;
+            //BEGINNING OF EVENT MANAGER
+            Eventer = function(){
+				 events.EventEmitter.call(this);
+            
+            var query = '?q={"userId":"'+username +'"}';
+            var get_options = {
+   					host: host,
+   					path: '/rest/userinfo'+query,
+   					method: 'GET',
+   				headers: { 
+                       'cache-control': 'no-cache',
+                        'x-apikey': xapikey
+                    }
+			    };
+                //GETTING INFO FROM DATABASE
+                this.getInfo = function(){
+                    self = this;
+                    https.get(get_options, function(res){
+                            console.log("STATUS: " +res.statusCode);
+                                body = '';
+                                res.on('data', function(chunk) {
+                                    body += chunk;
+                                });
+                                res.on('end', function() {
+                                    try {
+                                        //Use Info Here
+                                        var user = JSON.parse(body);
+                                        var timelineID = user[0].timelineId;
+                                        var timezone = user[0].timezone;
+                                        console.log(timelineID + " + " + timezone);
+                                        self.emit('callPost', timelineID, timezone);
+                            
+                                    } catch (e) {
+                                        console.log('Error parsing JSON!');
+                                    }	
+                                })
+                                res.on('error', function(e) {
+                                console.log("Got error: " + e.message);
+                         });
+                    });
+                }
             }
+            util.inherits(Eventer, events.EventEmitter);
 
-            var formattedTime = date+"T"+time+":00"+offset;
-            var formattedReminder = capitalizeEachWord(reminder);
+            Listener = function(){
+        		this.callPost = function(timeline, tzone){
+        			postInfo(timeline, tzone);
+        		}
+        	}
+        	var eventer = new Eventer();
+        	var listener = new Listener(eventer);
+        	eventer.on('callPost', listener.callPost);
+        	eventer.getInfo();
 
-            var pin = {
-                "id": "pebblepush-"+date+"-"+time,
-                "time": formattedTime,
-                "duration": 15,
-                "createNotification": {
-                    "layout": {
-                    "type": "genericNotification",
-                    "title": "New Reminder",
-                    "tinyIcon": "system://images/NOTIFICATION_LIGHTHOUSE",
-                    "body": "PebblePush just added " + formattedReminder + " to your Timeline"
-                    }
-                },
-                "reminders": [
-                    {
+            //POSTING INFO TO TIMELINE
+            postInfo = function(timeline, tzone){
+                var timezone = tzone;
+                var timelineID = timeline;
+                var offset;
+
+                switch(timezone){
+                    case "EDT":
+                        offset = "-04:00";
+                        break;
+                    case "CDT":
+                        offset = "-05:00";
+                        break;
+                    case "MDT":
+                        offset = "-06:00";
+                        break;
+                    case "PDT":
+                        offset = "-07:00";
+                        break;
+                    case "AKDT":
+                        offset = "-08:00";
+                        break;
+                    case "HST":
+                        offset = "-10:00";
+                        break;
+                    default:
+                        offset = "-04:00";
+                        break;
+                }
+
+                var formattedTime = date+"T"+time+":00"+offset;
+                var formattedReminder = capitalizeEachWord(reminder);
+
+                var pin = {
+                    "id": "pebblepush-"+date+"-"+time,
                     "time": formattedTime,
-                    "layout": {
-                        "type": "genericReminder",
-                        "tinyIcon": "system://images/NOTIFICATION_REMINDER",
-                        "title": formattedReminder
+                    "duration": 15,
+                    "createNotification": {
+                        "layout": {
+                        "type": "genericNotification",
+                        "title": "New Reminder",
+                        "tinyIcon": "system://images/NOTIFICATION_LIGHTHOUSE",
+                        "body": "PebblePush just added " + formattedReminder + " to your Timeline"
                         }
+                    },
+                    "reminders": [
+                        {
+                        "time": formattedTime,
+                        "layout": {
+                            "type": "genericReminder",
+                            "tinyIcon": "system://images/NOTIFICATION_REMINDER",
+                            "title": formattedReminder
+                            }
+                        }
+                    ],
+                    "layout": {
+                        "type": "genericPin",
+                        "title": formattedReminder,
+                        "tinyIcon": "system://images/NOTIFICATION_REMINDER",
+                        "body": "Created by PebblePush on Amazon Alexa"
                     }
-                ],
-                "layout": {
-                    "type": "genericPin",
-                    "title": formattedReminder,
-                    "tinyIcon": "system://images/NOTIFICATION_REMINDER",
-                    "body": "Created by PebblePush on Amazon Alexa"
-                }
-            };
+                };
 
-            var put_options = {
-                host: 'timeline-api.getpebble.com',
-                path: '/v1/user/pins/pebblepush-'+date+'-'+time,
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-User-Token': timelineID
-                }
-            };
+                var put_options = {
+                    host: 'timeline-api.getpebble.com',
+                    path: '/v1/user/pins/pebblepush-'+date+'-'+time,
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User-Token': timelineID
+                    }
+                };
 
-            put_req = https.request(put_options, function (res) {
-                console.log('STATUS: ' + res.statusCode);
-                console.log('HEADERS: ' + JSON.stringify(res.headers));
-                res.setEncoding('utf8');
-                res.on('data', function (chunk) {
-                    console.log('Response: ', chunk);
-                    context.succeed(
-                        generateResponse(
-                            buildSpeechletResponse('Reminder is ' + reminder + ', date is ' + date + ', and time is ' + time, true),
-                            {}
+                put_req = https.request(put_options, function (res) {
+                    console.log('STATUS: ' + res.statusCode);
+                    console.log('HEADERS: ' + JSON.stringify(res.headers));
+                    res.setEncoding('utf8');
+                    res.on('data', function (chunk) {
+                        console.log('Response: ', chunk);
+                        context.succeed(
+                            generateResponse(
+                                buildSpeechletResponse('Reminder is ' + reminder + ', date is ' + date + ', and time is ' + time, true),
+                                {}
+                            )
                         )
-                    )
+                    });
                 });
-            });
 
-            put_req.on('error', function(e) {
-                console.log('problem with request: ' + e.message);
-            });
-            console.log(JSON.stringify(pin));
-            put_req.write(JSON.stringify(pin));
-            put_req.end();
+                put_req.on('error', function(e) {
+                    console.log('problem with request: ' + e.message);
+                });
+                console.log(JSON.stringify(pin));
+                put_req.write(JSON.stringify(pin));
+                put_req.end();
 
-
+            }
             break;
 
          case "AMAZON.HelpIntent":
