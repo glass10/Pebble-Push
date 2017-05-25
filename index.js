@@ -62,9 +62,36 @@ exports.handler = (event, context) => {
             console.log(date);
             console.log(time);
 
-            var offset = "-04:00";
+            var timezone = "EDT";
+            var timelineID = '***REMOVED***';
+            var offset;
+
+            switch(timezone){
+                case "EDT":
+                    offset = "-04:00";
+                    break;
+                case "CDT":
+                    offset = "-05:00";
+                    break;
+                case "MDT":
+                    offset = "-06:00";
+                    break;
+                case "PDT":
+                    offset = "-07:00";
+                    break;
+                case "AKDT":
+                    offset = "-08:00";
+                    break;
+                case "HST":
+                    offset = "-10:00";
+                    break;
+                default:
+                    offset = "-04:00";
+                    break;
+            }
 
             var formattedTime = date+"T"+time+":00"+offset;
+            var formattedReminder = capitalizeEachWord(reminder);
 
             var pin = {
                 "id": "pebblepush-"+date+"-"+time,
@@ -75,7 +102,7 @@ exports.handler = (event, context) => {
                     "type": "genericNotification",
                     "title": "New Reminder",
                     "tinyIcon": "system://images/NOTIFICATION_LIGHTHOUSE",
-                    "body": "PebblePush has just added a new Reminder to your Timeline"
+                    "body": "PebblePush just added " + formattedReminder + " to your Timeline"
                     }
                 },
                 "reminders": [
@@ -84,13 +111,13 @@ exports.handler = (event, context) => {
                     "layout": {
                         "type": "genericReminder",
                         "tinyIcon": "system://images/NOTIFICATION_REMINDER",
-                        "title": reminder
+                        "title": formattedReminder
                         }
                     }
                 ],
                 "layout": {
                     "type": "genericPin",
-                    "title": reminder,
+                    "title": formattedReminder,
                     "tinyIcon": "system://images/NOTIFICATION_REMINDER",
                     "body": "Created by PebblePush on Amazon Alexa"
                 }
@@ -102,7 +129,7 @@ exports.handler = (event, context) => {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-User-Token': '***REMOVED***'
+                    'X-User-Token': timelineID
                 }
             };
 
@@ -206,4 +233,10 @@ generateResponse = (speechletResponse, sessionAttributes) => {
     response: speechletResponse
   }
 
+}
+
+function capitalizeEachWord(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
 }
