@@ -21,3 +21,13 @@ normalReq   to tell me to {Text} at {Time} {Date}
 normalReq   to tell me {Date} at {Time} to {Text}
 normalReq   to tell me at {Time} {Date} to {Text}
 normalReq   on {Date} at {Time} tell me to {Text}
+
+instructions    for instructions
+instructions    for instruction
+instructions    instructions
+instructions    instruction
+
+linkaccount     link account
+linkaccount     link accounts
+linkaccount     to link account
+linkaccount     to link accounts

@@ -37,6 +37,7 @@ exports.handler = (event, context) => {
             var date = event.request.intent.slots.Date.value;
             var time = event.request.intent.slots.Time.value;
             var username = event.session.user.userId;
+            var formattedUsername = username.substring(18,28);
             var self;
 
             var today = new Date();
@@ -51,12 +52,12 @@ exports.handler = (event, context) => {
             if(mm<10) {
                 mm='0'+mm
             } 
-
-            if(hours < 4){
-                dd--;
-            }
             today = yyyy+'-'+mm+'-'+dd;
 
+            //Handling undefined scenarios
+            if(reminder === undefined){
+                reminder = "New Reminder";
+            }
             if(date === undefined){
                 date = today;
             }
@@ -72,7 +73,7 @@ exports.handler = (event, context) => {
             Eventer = function(){
 				 events.EventEmitter.call(this);
             
-            var query = '?q={"userId":"'+username +'"}';
+            var query = '?q={"userId":"'+formattedUsername +'"}';
             var get_options = {
    					host: host,
    					path: '/rest/userinfo'+query,
@@ -97,11 +98,16 @@ exports.handler = (event, context) => {
                                         var user = JSON.parse(body);
                                         var timelineID = user[0].timelineId;
                                         var timezone = user[0].timezone;
-                                        console.log(timelineID + " + " + timezone);
                                         self.emit('callPost', timelineID, timezone);
                             
                                     } catch (e) {
                                         console.log('Error parsing JSON!');
+                                        context.succeed(
+                                            generateResponse(
+                                                buildSpeechletResponseAccount("Looks like you haven't linked your account yet. I've sent the link to do so in your Alexa App. For instructions and your ID, please say instructions now. Otherwise, say nevermind.", false),
+                                                {}
+                                            )
+                                        )
                                     }	
                                 })
                                 res.on('error', function(e) {
@@ -156,7 +162,7 @@ exports.handler = (event, context) => {
                 var formattedReminder = capitalizeEachWord(reminder);
 
                 var pin = {
-                    "id": "pebblepush-"+date+"-"+time,
+                    "id": "pebblepush-"+formattedUsername+'-'+date+'-'+time,
                     "time": formattedTime,
                     "duration": 15,
                     "createNotification": {
@@ -187,7 +193,7 @@ exports.handler = (event, context) => {
 
                 var put_options = {
                     host: 'timeline-api.getpebble.com',
-                    path: '/v1/user/pins/pebblepush-'+date+'-'+time,
+                    path: '/v1/user/pins/pebblepush-'+formattedUsername+'-'+date+'-'+time,
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -219,12 +225,39 @@ exports.handler = (event, context) => {
 
             }
             break;
+        case "instructions":
+            console.log("INSTRUCTIONS REQUEST");
+            var username = event.session.user.userId;
+            var info = "Welcome to PebblePush! In a few short minutes you will be ready to send reminders directly to your watch! Just follow these short steps:"
+                        +"\n- - -\n1) In the Pebble Appstore, download the 'Timeline Token' app. This app is required and must remain installed. Use this to get your Timeline Token"
+                        +"\n2) Your Alexa ID can be found below. This and your Timeline Token from Step 2 will be used in Step 3"
+                        +"\n3) Click the 'Link Account' button in your Alexa App and insert these values. If you don't see this card, please say 'ask Pebble Push to link account'. "
+                        +" You can also do this step by visiting www.pebblepush.me"
+                        +"\nYou are done! \n- - -\n**NOTE**: Pins can take some time to show up in your timeline. Do not rely on reminders any closer than 15min as Pebble cannot guarentee they will appear"
+                        +"\n- - -\nAlexa ID:\n"
+                        + username.substring(18,28);
+            context.succeed(
+                generateResponse(
+                    buildSpeechletResponseCard("I've sent setup instructions to your Alexa App. Please follow them closely in order to ensure successful pairing.", "Setup Instructions", info, true),
+                    {}
+                )
+            )
+            break;
+        
+        case "linkaccount":
+            console.log("LINK ACCOUNT REQUEST");
+            context.succeed(
+                generateResponse(
+                    buildSpeechletResponseAccount("Looks like you haven't linked your account yet. I've sent the link to do so in your Alexa App.", true),
+                    {}
+                )
+            )
 
          case "AMAZON.HelpIntent":
       	    console.log('HELP REQUEST');
       	    context.succeed(
                 generateResponse(
-                    buildSpeechletResponse('You can ask me to send a reminder to your Pebble Smartwatch with the reminder details, a date, and a time.... How may I help you?', false),
+                    buildSpeechletResponse('You can ask me to send a reminder to your Pebble Smartwatch with the reminder details, a date, and a time. For setup instructions, just say instructions. How may I help you?', false),
                     {}
                 )
             )
@@ -281,6 +314,36 @@ buildSpeechletResponse = (outputText, shouldEndSession) => {
     outputSpeech: {
       type: "PlainText",
       text: outputText
+    },
+    shouldEndSession: shouldEndSession
+  }
+
+}
+buildSpeechletResponseCard = (outputText, title, content, shouldEndSession) => {
+
+  return {
+    outputSpeech: {
+      type: "PlainText",
+      text: outputText
+    },
+    card: {
+      type: "Simple",
+      title: title,
+      content: content
+    },
+    shouldEndSession: shouldEndSession
+  }
+
+}
+buildSpeechletResponseAccount = (outputText, shouldEndSession) => {
+
+  return {
+    outputSpeech: {
+      type: "PlainText",
+      text: outputText
+    },
+    card: {
+      type: "LinkAccount",
     },
     shouldEndSession: shouldEndSession
   }

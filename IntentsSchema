@@ -18,6 +18,12 @@
       "intent": "normalReq"
     },
     {
+      "intent": "instructions"
+    },
+    {
+      "intent": "linkaccount"
+    },
+    {
       "intent": "AMAZON.HelpIntent"
     },
     {
