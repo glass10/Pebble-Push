@@ -98,6 +98,7 @@ exports.handler = (event, context) => {
                                         var user = JSON.parse(body);
                                         var timelineID = user[0].timelineId;
                                         var timezone = user[0].timezone;
+                                        console.log(timelineID + " + " + timezone);
                                         self.emit('callPost', timelineID, timezone);
                             
                                     } catch (e) {
@@ -209,7 +210,7 @@ exports.handler = (event, context) => {
                         console.log('Response: ', chunk);
                         context.succeed(
                             generateResponse(
-                                buildSpeechletResponse('Reminder is ' + reminder + ', date is ' + date + ', and time is ' + time, true),
+                                buildSpeechletResponse("I've sent the reminder " + reminder + " to your Watch!", true),
                                 {}
                             )
                         )
