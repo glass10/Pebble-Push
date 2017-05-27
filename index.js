@@ -45,6 +45,8 @@ exports.handler = (event, context) => {
             var mm = today.getMonth()+1; //January is 0!
             var yyyy = today.getFullYear();
             var hours = today.getHours();
+            var mins = today.getMinutes();
+            var secs = today.getSeconds();
             console.log(hours);
             if(dd<10) {
                 dd='0'+dd
@@ -161,9 +163,11 @@ exports.handler = (event, context) => {
 
                 var formattedTime = date+"T"+time+":00"+offset;
                 var formattedReminder = capitalizeEachWord(reminder);
+                var currentTime = hours+mins+secs;
+                var pinId = "pebblepush-"+formattedUsername+"-"+date+"-"+currentTime;
 
                 var pin = {
-                    "id": "pebblepush-"+formattedUsername+'-'+date+'-'+time,
+                    "id": pinId,
                     "time": formattedTime,
                     "duration": 15,
                     "createNotification": {
@@ -194,7 +198,7 @@ exports.handler = (event, context) => {
 
                 var put_options = {
                     host: 'timeline-api.getpebble.com',
-                    path: '/v1/user/pins/pebblepush-'+formattedUsername+'-'+date+'-'+time,
+                    path: '/v1/user/pins/'+pinId,
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -210,7 +214,7 @@ exports.handler = (event, context) => {
                         console.log('Response: ', chunk);
                         context.succeed(
                             generateResponse(
-                                buildSpeechletResponse("I've sent the reminder " + reminder + " to your Watch!", true),
+                                buildSpeechletResponse("I've sent the reminder " + reminder + " to your Timeline!", true),
                                 {}
                             )
                         )
