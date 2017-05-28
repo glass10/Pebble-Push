@@ -16,11 +16,11 @@ Pebble Push utilizes the Pebble Web API to send pins directly to your timeline. 
 ## What's next for Pebble Push
 I hope to build upon this system in the future to maybe streamline the setup process a little more, implementing more reminder options, and possible branching out into more services such as Google Calendar. However as of now, I find this skill incredibly usefull and am using it nearly every day.
 
-##Setup instructions
+## Setup instructions
 Welcome to PebblePush! In a few short minutes you will be ready to send reminders directly to your watch! Just follow these short steps:
 
 1)In the Pebble Appstore, download the 'Timeline Token' app. This app is required and must remain installed. Use this to get your Timeline Token
-2)Your Alexa ID can be found in the card within the Alexa App. This and your Timeline Token from Step 2 will be used in Step 3"
+2)Your Alexa ID can be found in the card within the Alexa App. This and your Timeline Token from Step 2 will be used in Step 3
 3)Click the 'Link Account' button in your Alexa App and insert these values. If you don't see this card, please say 'ask Pebble Push to link account'. You can also do this step by visiting www.pebblepush.me
 
 You are done! **NOTE:** Pins can take some time to show up in your timeline. Do not rely on reminders any closer than 15min as Pebble cannot guarentee they will appear
