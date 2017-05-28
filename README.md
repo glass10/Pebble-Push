@@ -1,4 +1,6 @@
-![alt text](http://i.imgur.com/LZXqrgZ.png)
+<p align="center">
+  <img src="http://i.imgur.com/LZXqrgZ.png">
+</p>
 
 # Pebble Push
 An Amazon Alexa skill that pushes reminders directly to your Pebble Smartwatch Timeline.
