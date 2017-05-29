@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="http://i.imgur.com/LZXqrgZ.png">
+  <img src="http://i.imgur.com/XYtMrPw.png">
 </p>
 
 # Pebble Push
